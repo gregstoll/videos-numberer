@@ -54,15 +54,49 @@ fn get_sortable_filename(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{path::PathBuf};
 
     use crate::map_video_paths;
 
+    fn get_input_from_strs(strs: &Vec<&str>) -> Vec<PathBuf> {
+        strs.iter().map(|s| PathBuf::from(s)).collect::<Vec<_>>()
+    }
+
+    fn map_and_assert_values(strs: &Vec<&str>, expected_values: &Vec<&str>) {
+        assert_eq!(strs.len(), expected_values.len());
+        let input = get_input_from_strs(strs);
+        let map = map_video_paths(&input);
+        assert_eq!(strs.len(), map.len());
+        for (index, &expected) in expected_values.iter().enumerate() {
+            assert_eq!(expected, map[&input[index]]);
+        }
+    }
+
     #[test]
     fn one_entry() {
-        let input = vec![PathBuf::from("/abc.mkv")];
-        let map = map_video_paths(&input);
-        assert_eq!(1, map.len());
-        assert_eq!("01_abc.mkv", map[&input[0]]);
+        let strs = vec!["/abc.mkv"];
+        map_and_assert_values(&strs, &vec!["01_abc.mkv"]);
     }
+
+    #[test]
+    fn multiple_entries_split() {
+        let strs = vec!["/Movies/a.mkv", "/Movies/c.mkv", "/TV Shows/b.mkv"];
+        let expected = vec!["01_a.mkv", "03_c.mkv", "02_b.mkv"];
+        map_and_assert_values(&strs, &expected);
+    }
+
+    #[test]
+    fn even_more_nested_entries() {
+        let strs = vec!["/Movies/a.mkv", "/Movies/c.mkv", "/TV Shows/B/b_1.mkv", "/TV Shows/B/b_2.mkv"];
+        let expected = vec!["01_a.mkv", "04_c.mkv", "02_b_1.mkv", "03_b_2.mkv"];
+        map_and_assert_values(&strs, &expected);
+    }
+
+    #[test]
+    fn even_more_nested_entries_after_running() {
+        let strs = vec!["/Movies/01_a.mkv", "/Movies/02_c.mkv", "/TV Shows/B/03_b_1.mkv", "/TV Shows/B/04_b_2.mkv"];
+        let expected = vec!["01_a.mkv", "04_c.mkv", "02_b_1.mkv", "03_b_2.mkv"];
+        map_and_assert_values(&strs, &expected);
+    }
+
 }
