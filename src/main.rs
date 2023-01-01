@@ -58,7 +58,7 @@ fn get_sortable_filename(path: &Path) -> String {
     if let Some(captures) = LEADING_NUMBERS_RE.captures(f) {
         return captures[1].to_string().to_lowercase();
     }
-    return f.to_string().to_lowercase();
+    f.to_string().to_lowercase()
 }
 
 
