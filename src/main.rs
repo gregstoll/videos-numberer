@@ -116,4 +116,11 @@ mod tests {
         map_and_assert_values(&strs, &expected);
     }
 
+    #[test]
+    fn even_more_nested_entries_after_running_with_case() {
+        let strs = vec!["/Movies/01_a.mkv", "/Movies/02_C.mkv", "/TV Shows/B/03_b_1.mkv", "/TV Shows/B/04_B_2.mkv"];
+        let expected = vec!["01_a.mkv", "04_C.mkv", "02_b_1.mkv", "03_B_2.mkv"];
+        map_and_assert_values(&strs, &expected);
+    }
+
 }
