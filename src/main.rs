@@ -7,7 +7,18 @@ use walkdir::WalkDir;
 const VIDEO_EXTENSION: &str = "mkv";
 
 fn main() {
-    println!("Hello, world!");
+    let args = std::env::args().collect::<Vec<_>>();
+    if args.len() != 2 {
+        panic!("Requires exactly 1 argument - the name of the directory to traverse");
+    }
+    let paths = get_video_paths(Path::new(&args[1]));
+    let map = map_video_paths(&paths);
+    for path in &paths {
+        let new_filename = &map[path];
+        let new_path = path.with_file_name(new_filename);
+        println!("Renaming {} to {}", path.display(), new_path.display());
+        std::fs::rename(path, new_path).expect("failed to rename file!");
+    }
 }
 
 /// Maps a Vec of paths into their new filenames
@@ -28,11 +39,10 @@ fn map_video_paths(paths: &Vec<PathBuf>) -> HashMap<&PathBuf, String> {
     name_mapping
 }
 
-// TODO - take in directory
-fn get_video_paths() -> Vec<PathBuf> {
+fn get_video_paths(path: &Path) -> Vec<PathBuf> {
     let mut paths = vec![];
     let video_extension = OsStr::new(VIDEO_EXTENSION);
-    for e in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
+    for e in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
         if e.metadata().unwrap().is_file() && e.path().extension() == Some(video_extension) {
             paths.push(e.path().to_path_buf());
         }
