@@ -26,13 +26,13 @@ fn map_video_paths(paths: &Vec<PathBuf>) -> HashMap<&PathBuf, String> {
     if paths.len() >= 1000 {
         panic!("too many videos!");
     }
-    let mut sorted_paths = paths.iter().map(|p| (p, get_sortable_filename(p))).collect::<Vec<_>>();
+    let mut sorted_paths = paths.iter().map(|p| (p, get_raw_filename(p), get_raw_filename(p).to_lowercase())).collect::<Vec<_>>();
     // this .clone() is ugly :-(
-    sorted_paths.sort_by_key(|p| p.1.clone());
+    sorted_paths.sort_by_key(|p| p.2.clone());
     let digits = if sorted_paths.len() >= 100 { 3 } else { 2 };
 
     let mut name_mapping = HashMap::new();
-    for (index, (original_path, filename)) in sorted_paths.into_iter().enumerate() {
+    for (index, (original_path, filename, _)) in sorted_paths.into_iter().enumerate() {
         let new_filename = format!("{:0width$}_{}", (index + 1), filename, width = digits);
         assert!(name_mapping.insert(original_path, new_filename).is_none());
     }
@@ -50,15 +50,15 @@ fn get_video_paths(path: &Path) -> Vec<PathBuf> {
     paths
 }
 
-fn get_sortable_filename(path: &Path) -> String {
+fn get_raw_filename(path: &Path) -> String {
     let f = path.file_name().unwrap().to_str().unwrap();
     lazy_static! {
         static ref LEADING_NUMBERS_RE: Regex = Regex::new(r"^\d{1,3}_(.*)$").unwrap();
     }
     if let Some(captures) = LEADING_NUMBERS_RE.captures(f) {
-        return captures[1].to_string().to_lowercase();
+        return captures[1].to_string()
     }
-    f.to_string().to_lowercase()
+    f.to_string()
 }
 
 
@@ -92,6 +92,13 @@ mod tests {
     fn multiple_entries_split() {
         let strs = vec!["/Movies/a.mkv", "/Movies/c.mkv", "/TV Shows/b.mkv"];
         let expected = vec!["01_a.mkv", "03_c.mkv", "02_b.mkv"];
+        map_and_assert_values(&strs, &expected);
+    }
+
+    #[test]
+    fn multiple_entries_split_preserve_case() {
+        let strs = vec!["/Movies/A.mkv", "/Movies/c.mkv", "/TV Shows/B.mkv"];
+        let expected = vec!["01_A.mkv", "03_c.mkv", "02_B.mkv"];
         map_and_assert_values(&strs, &expected);
     }
 
