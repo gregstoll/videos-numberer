@@ -13,12 +13,20 @@ fn main() {
     }
     let paths = get_video_paths(Path::new(&args[1]));
     let map = map_video_paths(&paths);
+    let mut rename_count = 0;
+    let mut unchanged_count = 0;
     for path in &paths {
         let new_filename = &map[path];
         let new_path = path.with_file_name(new_filename);
-        println!("Renaming {} to {}", path.display(), new_path.display());
-        std::fs::rename(path, new_path).expect("failed to rename file!");
+        if path == &new_path {
+            unchanged_count += 1;
+        } else {
+            rename_count += 1;
+            println!("Renaming {} to {}", path.display(), new_path.display());
+            std::fs::rename(path, new_path).expect("failed to rename file!");
+        }
     }
+    println!("{} files renamed, {} files left unchanged", rename_count, unchanged_count);
 }
 
 /// Maps a Vec of paths into their new filenames
