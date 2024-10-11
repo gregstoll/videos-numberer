@@ -8,15 +8,22 @@ const VIDEO_EXTENSION: &str = "mkv";
 
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();
-    if args.len() != 2 {
+    if args.len() != 2 && args.len() != 3 {
         panic!("Requires exactly 1 argument - the name of the directory to traverse");
     }
-    let paths = get_video_paths(Path::new(&args[1]));
+    let remove_numbers = if args.len() == 3 {
+        let do_remove = &args[1] == "-r" || &args[1] == "--remove";
+        assert!(do_remove);
+        do_remove
+    } else {
+        false
+    };
+    let paths = get_video_paths(Path::new(&args[args.len() - 1]));
     let map = map_video_paths(&paths);
     let mut rename_count = 0;
     let mut unchanged_count = 0;
     for path in &paths {
-        let new_filename = &map[path];
+        let new_filename = if remove_numbers { &get_raw_filename(&path) } else { &map[path] };
         let new_path = path.with_file_name(new_filename);
         if path == &new_path {
             unchanged_count += 1;
